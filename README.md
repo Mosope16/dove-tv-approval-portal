@@ -42,7 +42,7 @@ source .venv/bin/activate
 ```
 
 ### 3. Install Dependencies
-Make sure Django is installed (add `requirements.txt` if you have one later):
+Make sure Django is installed:
 ```bash
 pip install django
 ```
