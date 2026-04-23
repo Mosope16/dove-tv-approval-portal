@@ -28,7 +28,7 @@ An internal, centralized management system built for the Dove TV Engineering and
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/dove-tv-approval-portal.git
+git clone https://github.com/Mosope16/dove-tv-approval-portal.git
 cd dove-tv-approval-portal
 ```
 
