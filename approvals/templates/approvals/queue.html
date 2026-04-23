@@ -1,0 +1,135 @@
+{% extends 'approvals/base.html' %}
+
+{% block extra_css %}
+<style>
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { text-align: left; padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    th { color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+    tr:hover { background: rgba(255, 255, 255, 0.03); }
+    
+    .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; letter-spacing: 0.5px; display: inline-block; white-space: nowrap; }
+    .PENDING { background: rgba(255, 152, 0, 0.2); color: #ffb74d; border: 1px solid #ffb74d; }
+    .APPROVED { background: rgba(33, 150, 243, 0.2); color: #64b5f6; border: 1px solid #64b5f6; } 
+    .ACTIVE { background: rgba(156, 39, 176, 0.2); color: #ce93d8; border: 1px solid #ce93d8; } 
+    .RECEIVED, .RETURNED { background: rgba(76, 175, 80, 0.2); color: #81c784; border: 1px solid #81c784; } 
+    .DENIED { background: rgba(244, 67, 54, 0.2); color: #e57373; border: 1px solid #e57373; }
+    
+    .action-link { color: #4fc3f7; text-decoration: none; font-weight: bold; margin-right: 15px; display: inline-block; margin-bottom: 5px; cursor: pointer; }
+    .action-link:hover { text-decoration: underline; }
+    
+    .tab-container { display: flex; border-bottom: 2px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px; }
+    .tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 12px 25px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-bottom: -2px; border-bottom: 2px solid transparent; }
+    .tab-btn:hover { color: white; }
+    .tab-btn.active { color: var(--accent-brand); border-bottom: 2px solid var(--accent-brand); }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <a href="{% url 'dashboard' %}" class="btn-outline" style="display: inline-block; margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+
+    <div class="glass-card">
+        <h2 style="margin: 0 0 20px 0; font-size: 1.8rem; color: #fff;">{{ page_title }}</h2>
+
+        <div class="tab-container no-print">
+            <button class="tab-btn active" onclick="switchTab('studioTab', this)"><i class="fas fa-video"></i> Studio</button>
+            <button class="tab-btn" onclick="switchTab('marketingTab', this)"><i class="fas fa-bullhorn"></i> Marketing</button>
+            <button class="tab-btn" onclick="switchTab('equipTab', this)"><i class="fas fa-camera"></i> Equipment</button>
+        </div>
+
+        <div id="studioTab" class="tab-content active table-responsive">
+            <table>
+                <thead><tr><th>ID</th><th>Requester</th><th>Programme</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for b in bookings %}
+                    <tr>
+                        <td style="font-family: monospace; color: var(--text-muted);">#SB-{{ b.id }}</td>
+                        <td>{{ b.requester.username }}</td>
+                        <td style="font-weight: bold;">{{ b.prog_name }}</td>
+                        <td>{{ b.get_location_display }}</td>
+                        <td><span class="status-badge {{ b.status }}">{{ b.get_status_display }}</span></td>
+                        <td>
+                            {% if b.status == 'PENDING' and user_role == 'PROG_ENG' %}
+                                <a href="{% url 'process_booking' b.id 'approve' %}" class="action-link" style="color: #81c784;"><i class="fas fa-check"></i> Approve</a>
+                            {% elif b.status == 'APPROVED' and user_role == 'ENG_MGR' %}
+                                <a href="{% url 'process_booking' b.id 'receive' %}" class="action-link" style="color: #64b5f6;"><i class="fas fa-clipboard-check"></i> Final Approve</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}<tr><td colspan="6" style="text-align: center; padding: 20px;">No studio bookings found.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="marketingTab" class="tab-content table-responsive">
+            <table>
+                <thead><tr><th>ID</th><th>Requester</th><th>Assignment</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for m in marketing_jobs %}
+                    <tr>
+                        <td style="font-family: monospace; color: var(--text-muted);">#MJO-{{ m.id }}</td>
+                        <td>{{ m.requester.username }}</td>
+                        <td style="font-weight: bold;">{{ m.place_of_assignment }}</td>
+                        <td><span class="status-badge {{ m.status }}">{{ m.get_status_display }}</span></td>
+                        <td>
+                            {% if m.status == 'PENDING' and user_role == 'PROG_ENG' %}
+                                <a href="{% url 'process_marketing' m.id 'approve' %}" class="action-link" style="color: #81c784;"><i class="fas fa-check"></i> Approve</a>
+                            {% elif m.status == 'APPROVED' and user_role == 'ENG_MGR' %}
+                                <a href="{% url 'process_marketing' m.id 'receive' %}" class="action-link" style="color: #64b5f6;"><i class="fas fa-clipboard-check"></i> Final Approve</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}<tr><td colspan="5" style="text-align: center; padding: 20px;">No marketing jobs found.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="equipTab" class="tab-content table-responsive">
+            <table>
+                <thead><tr><th>ID</th><th>Requester</th><th>Equipment</th><th>Dates</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for e in equipment_requests %}
+                    <tr {% if e.is_overdue %}style="background: rgba(244, 67, 54, 0.05); border-left: 3px solid #e57373;"{% endif %}>
+                        <td style="font-family: monospace; color: var(--text-muted);">#EQ-{{ e.id }}</td>
+                        <td>{{ e.requester.username }}</td>
+                        <td style="font-weight: bold;">
+                            {{ e.equipment.name }}
+                            {% if e.is_overdue %}<br><span style="color: #e57373; font-size: 0.75rem; font-weight: bold;"><i class="fas fa-exclamation-circle"></i> OVERDUE</span>{% endif %}
+                        </td>
+                        <td style="font-size: 0.85rem;">{{ e.checkout_date|date:"M d" }} to {{ e.expected_return_date|date:"M d" }}</td>
+                        <td><span class="status-badge {{ e.status }}">{{ e.get_status_display }}</span></td>
+                        <td>
+                            {% if user_role in 'PROG_ENG,ENG_MGR,HOU' %}
+                                {% if e.status == 'PENDING' %}
+                                    <a href="{% url 'process_equipment' e.id 'approve' %}" class="action-link" style="color: #81c784;"><i class="fas fa-check"></i> Approve</a>
+                                {% elif e.status == 'APPROVED' %}
+                                    <a href="{% url 'process_equipment' e.id 'checkout' %}" class="action-link" style="color: #ce93d8;"><i class="fas fa-hand-holding"></i> Hand Over</a>
+                                {% elif e.status == 'ACTIVE' %}
+                                    <a href="{% url 'process_equipment' e.id 'return' %}" class="action-link" style="color: #64b5f6;"><i class="fas fa-undo"></i> Return</a>
+                                    {% if e.is_overdue %}
+                                    <a href="{% url 'send_return_reminder' e.id %}" class="action-link" style="color: #e57373; margin-top: 5px;"><i class="fas fa-bell"></i> Ping User</a>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}<tr><td colspan="6" style="text-align: center; padding: 20px;">No equipment requests found.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btnElement.classList.add('active');
+    }
+</script>
+{% endblock %}

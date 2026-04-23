@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dove TV Portal{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'approvals/css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div style="padding: 0 1rem 2rem;">
+                <h2 style="font-weight: 800; font-size: 1.25rem; color: var(--primary);">Dove TV<span style="color: var(--text);">.</span></h2>
+            </div>
+            
+            <nav style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline" style="justify-content: flex-start; border: none; {% if request.resolver_match.url_name == 'dashboard' %}background: var(--primary); color: white;{% endif %}">
+                    📊 Dashboard
+                </a>
+                <a href="{% url 'booking_hub' %}" class="btn btn-outline" style="justify-content: flex-start; border: none; {% if request.resolver_match.url_name == 'booking_hub' %}background: var(--primary); color: white;{% endif %}">
+                    🎥 Studio Bookings
+                </a>
+                <a href="{% url 'marketing_hub' %}" class="btn btn-outline" style="justify-content: flex-start; border: none; {% if request.resolver_match.url_name == 'marketing_hub' %}background: var(--primary); color: white;{% endif %}">
+                    🎨 Marketing & Post-Prod
+                </a>
+                <a href="{% url 'inventory' %}" class="btn btn-outline" style="justify-content: flex-start; border: none; {% if request.resolver_match.url_name == 'inventory' %}background: var(--primary); color: white;{% endif %}">
+                    📦 Gear Vault
+                </a>
+                <a href="{% url 'fault_hub' %}" class="btn btn-outline" style="justify-content: flex-start; border: none; {% if request.resolver_match.url_name == 'fault_hub' %}background: var(--primary); color: white;{% endif %}">
+                    🔧 Fault Reports
+                </a>
+                <a href="{% url 'roster' %}" class="btn btn-outline" style="justify-content: flex-start; border: none; {% if request.resolver_match.url_name == 'roster' %}background: var(--primary); color: white;{% endif %}">
+                    📅 Duty Roster
+                </a>
+            </nav>
+
+            <div style="padding-top: 1rem; border-top: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-weight: 800;">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <p style="font-size: 0.875rem; font-weight: 700;">{{ request.user.username }}</p>
+                        <p style="font-size: 0.75rem; color: #64748b;">{{ request.user.profile.role }}</p>
+                    </div>
+                </div>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline" style="width: 100%; font-size: 0.75rem;">Logout</button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,35 @@
+{% extends 'approvals/base.html' %}
+
+{% block extra_css %}
+<style>
+    label { font-weight: bold; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .errorlist { color: #ff5252; list-style-type: none; padding: 0; margin-top: -10px; margin-bottom: 15px; font-size: 0.85rem; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+    <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+        <h2 style="margin: 0; font-size: 1.8rem; color: #fff;">Equipment Checkout</h2>
+        <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 5px;">Request gear from the IT inventory.</div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <label>Select Equipment</label>
+        {{ form.equipment }}
+        {{ form.equipment.errors }}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div><label>Checkout Date</label>{{ form.checkout_date }}{{ form.checkout_date.errors }}</div>
+            <div><label>Expected Return</label>{{ form.expected_return_date }}{{ form.expected_return_date.errors }}</div>
+        </div>
+
+        <button type="submit" class="btn-pink" style="width: 100%; margin-top: 10px; font-size: 1.1rem; padding: 15px;">
+            <i class="fas fa-paper-plane"></i> Submit Request
+        </button>
+    </form>
+</div>
+{% endblock %}

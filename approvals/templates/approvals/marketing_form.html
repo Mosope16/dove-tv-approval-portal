@@ -1,0 +1,54 @@
+{% extends 'approvals/base.html' %}
+
+{% block extra_css %}
+<style>
+    label { font-weight: bold; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .errorlist { color: #ff5252; list-style-type: none; padding: 0; margin-top: -10px; margin-bottom: 15px; font-size: 0.85rem; font-weight: bold; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    
+    @media (max-width: 600px) {
+        .form-grid { grid-template-columns: 1fr; gap: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width: 700px; margin: 0 auto;">
+    <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+        <h2 style="margin: 0; font-size: 1.8rem; color: #fff;">
+            <i class="fas fa-bullhorn" style="color: var(--accent-brand); margin-right: 10px;"></i>Marketing Job Order
+        </h2>
+        <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 5px;">Request IT coverage for an off-site or marketing event.</div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <label>Location / Venue</label>
+        {{ form.place_of_assignment }}
+        {{ form.place_of_assignment.errors }}
+
+        <div class="form-grid">
+            <div>
+                <label>Date of Assignment</label>
+                {{ form.date_of_assignment }}
+                {{ form.date_of_assignment.errors }}
+            </div>
+            <div>
+                <label>Time of Assignment</label>
+                {{ form.time_of_assignment }}
+                {{ form.time_of_assignment.errors }}
+            </div>
+        </div>
+
+        <label>Job Description & Scope</label>
+        {{ form.job_description }}
+        {{ form.job_description.errors }}
+        
+        <button type="submit" class="btn-pink" style="width: 100%; margin-top: 10px; font-size: 1.1rem; padding: 15px;">
+            <i class="fas fa-paper-plane"></i> Submit Marketing Job
+        </button>
+    </form>
+</div>
+{% endblock %}

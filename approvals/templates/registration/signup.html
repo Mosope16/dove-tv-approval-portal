@@ -1,0 +1,129 @@
+{% extends 'approvals/base.html' %}
+
+{% block title %}Sign Up | Dove TV Portal{% endblock %}
+
+{% block content %}
+<div style="min-height: 90vh; display: flex; align-items: center; justify-content: center; padding: 2.5rem 1rem;">
+    <div class="glass-card" style="width: 100%; max-width: 450px; padding: 2.5rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 64px; height: 64px; background: rgba(225, 29, 72, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--accent); margin: 0 auto 1.5rem;">
+                <i class="fas fa-user-plus" style="font-size: 1.75rem;"></i>
+            </div>
+            <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text); letter-spacing: -0.025em;">Create Account</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">Join the Dove TV IT Portal</p>
+        </div>
+
+        <form method="post" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            {% for field in form %}
+                <div class="form-group" style="position: relative; margin-bottom: 0;">
+                    <label style="margin-bottom: 0.5rem; display: block;">{{ field.label }}</label>
+                    <div style="position: relative;">
+                        {{ field }}
+                        {% if field.name == 'password1' or field.name == 'password2' %}
+                            <div onclick="togglePassword(this)" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; padding: 5px; z-index: 10;">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if field.name == 'password1' %}
+                        <div id="password-strength-wrapper" style="margin-top: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <span style="font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Strength: <span id="strength-text" style="color: var(--accent);">Weak</span></span>
+                            </div>
+                            <div style="height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
+                                <div id="strength-bar" style="height: 100%; width: 25%; background: var(--accent); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if field.help_text and field.name != 'password1' and field.name != 'password2' %}
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.45rem;">{{ field.help_text|safe }}</div>
+                    {% endif %}
+                    
+                    {% for error in field.errors %}
+                        <div style="color: var(--accent); font-size: 0.75rem; font-weight: 700; margin-top: 0.45rem;">
+                           <i class="fas fa-info-circle"></i> {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; margin-top: 1rem; font-size: 1rem;">
+                <i class="fas fa-user-check"></i> Sign Up
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">
+                Already have an account? <a href="{% url 'login' %}" style="color: var(--accent); text-decoration: none; font-weight: 700;">Log in here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePassword(icon) {
+        let input = icon.parentElement.querySelector('input');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            icon.style.color = 'var(--primary)';
+        } else {
+            input.type = "password";
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            icon.style.color = 'var(--text-muted)';
+        }
+    }
+
+    const passwordInput = document.querySelector('input[name="password1"]');
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            const val = passwordInput.value;
+            let strength = 0;
+            
+            if (val.length === 0) strength = 0;
+            else {
+                if (val.length >= 8) strength += 25;
+                if (val.match(/[a-z]/) && val.match(/[A-Z]/)) strength += 25;
+                if (val.match(/\d/)) strength += 25;
+                if (val.match(/[^a-zA-Z\d]/)) strength += 25;
+            }
+
+            strengthBar.style.width = strength + '%';
+            
+            if (strength === 0) {
+                strengthBar.style.width = '0%';
+                strengthText.innerText = 'None';
+                strengthText.style.color = 'var(--text-muted)';
+            } else if (strength <= 25) {
+                strengthBar.style.background = '#D32F2F'; // Red
+                strengthText.innerText = 'Weak';
+                strengthText.style.color = '#D32F2F';
+            } else if (strength <= 50) {
+                strengthBar.style.background = '#F57C00'; // Orange
+                strengthText.innerText = 'Fair';
+                strengthText.style.color = '#F57C00';
+            } else if (strength <= 75) {
+                strengthBar.style.background = '#FBC02D'; // Yellow
+                strengthText.innerText = 'Good';
+                strengthText.style.color = '#FBC02D';
+            } else {
+                strengthBar.style.background = '#388E3C'; // Green
+                strengthText.innerText = 'Strong';
+                strengthText.style.color = '#388E3C';
+            }
+        });
+    }
+</script>
+{% endblock %}

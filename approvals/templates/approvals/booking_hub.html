@@ -1,0 +1,141 @@
+{% extends 'approvals/base.html' %}
+
+{% block title %}Studio Bookings | Dove TV Portal{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h1 style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 48px; height: 48px; background: rgba(225, 29, 72, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                <i class="fas fa-video"></i>
+            </div>
+            Studio Bookings
+        </h1>
+        <p class="subtitle">Reserve recording slots and manage the station broadcast schedule.</p>
+    </div>
+    {% if request.user.profile.access_role != 'USER' %}
+    <div style="padding: 0.65rem 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 50px; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+        <i class="fas fa-shield-alt" style="color: var(--accent);"></i> Management Access
+    </div>
+    {% endif %}
+</header>
+
+<div class="grid grid-cols-2" style="gap: 2.5rem; align-items: start;">
+    <!-- Booking Form -->
+    <div class="glass-card" style="padding: 2.5rem;">
+        <h3 style="margin-bottom: 1.75rem; font-size: 1.1rem; font-weight: 800; color: var(--text);">
+            <i class="fas fa-calendar-plus" style="color: var(--accent); margin-right: 0.5rem;"></i> New Request
+        </h3>
+        <form method="post" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Program / Production Title</label>
+                {{ form.prog_name }}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.25rem;">
+                <div class="form-group">
+                    <label>Shooting Date</label>
+                    {{ form.date_of_recording }}
+                </div>
+                <div class="form-group">
+                    <label>Transmission Mode</label>
+                    {{ form.mode }}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                <div class="form-group">
+                    <label>Start Time</label>
+                    {{ form.start_time }}
+                </div>
+                <div class="form-group">
+                    <label>End Time</label>
+                    {{ form.end_time }}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; padding: 1.25rem; background: rgba(0,0,0,0.02); border-radius: 1rem; border: 1px dashed var(--border);">
+                <div class="form-group" style="margin: 0;">
+                    <label>Producer Name</label>
+                    {{ form.producer }}
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label>Presenter Name</label>
+                    {{ form.presenter }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="height: 55px; font-size: 1rem; margin-top: 0.5rem;">
+                <i class="fas fa-paper-plane"></i> Initialize Booking
+            </button>
+        </form>
+    </div>
+
+    <!-- History / Schedule -->
+    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <h3 style="font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">
+            Upcoming Studio Assignments
+        </h3>
+        
+        {% for booking in bookings %}
+        <div class="content-card" style="padding: 1.5rem; position: relative; overflow: hidden;">
+            {% if booking.mode == 'LIVE' %}
+            <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: var(--accent); box-shadow: 2px 0 10px rgba(225, 29, 72, 0.3);"></div>
+            {% endif %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
+                <div>
+                    <h4 style="font-weight: 800; font-size: 1.15rem; color: var(--text); letter-spacing: -0.01em;">{{ booking.prog_name }}</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span><i class="far fa-calendar-alt" style="color: var(--accent);"></i> {{ booking.date_of_recording }}</span>
+                        <span style="opacity: 0.3;">|</span>
+                        <span><i class="far fa-clock"></i> {{ booking.time_of_recording }}</span>
+                    </p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                    <span class="status-pill {% if booking.status == 'PENDING' %}pill-pending{% elif booking.status == 'APPROVED' %}pill-approved{% else %}pill-denied{% endif %}">
+                        {{ booking.status }}
+                    </span>
+                    {% if booking.status == 'APPROVED' %}
+                    <a href="{% url 'print_booking_memo' booking.id %}" target="_blank" style="font-size: 0.75rem; color: var(--accent); font-weight: 800; text-decoration: none; display: flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem;">
+                        <i class="fas fa-print"></i> Print Memo
+                    </a>
+                    {% endif %}
+                    {% if booking.mode == 'LIVE' %}
+                    <span style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.65rem; font-weight: 900; color: var(--accent); text-transform: uppercase; animation: status-pulse 2s infinite;">
+                        <span style="width: 6px; height: 6px; background: var(--accent); border-radius: 50%;"></span> LIVE BROADCAST
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border);">
+                <div class="user-cell">
+                    <div class="avatar-sm" style="background: var(--border); color: var(--text);">{{ booking.producer|first|upper }}</div>
+                    <div>
+                        <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Producer</p>
+                        <p style="font-size: 0.85rem; font-weight: 700;">{{ booking.producer }}</p>
+                    </div>
+                </div>
+                <div class="user-cell">
+                    <div class="avatar-sm" style="background: rgba(0,0,0,0.02); color: var(--text-muted); border: 1px solid var(--border);">
+                        <i class="fas fa-satellite-dish" style="font-size: 0.7rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Mode</p>
+                        <p style="font-size: 0.85rem; font-weight: 700;">{{ booking.get_mode_display }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="glass-card" style="text-align: center; padding: 4rem 2rem; border: 2px dashed var(--border);">
+            <i class="fas fa-calendar-times" style="font-size: 2.5rem; color: var(--border); margin-bottom: 1rem; display: block;"></i>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">No recordings scheduled for this period.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

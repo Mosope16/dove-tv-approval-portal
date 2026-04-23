@@ -1,0 +1,113 @@
+{% extends 'approvals/base.html' %}
+
+{% block extra_css %}
+<style>
+    label { font-weight: bold; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .errorlist { 
+        color: #ff5252; 
+        list-style-type: none; 
+        padding: 10px 15px; 
+        margin: 10px 0; 
+        background: rgba(244, 67, 54, 0.1); 
+        border: 1px solid rgba(244, 67, 54, 0.3); 
+        border-radius: 10px; 
+        font-size: 0.85rem; 
+        font-weight: bold; 
+        position: relative;
+        animation: fadeIn 0.5s ease;
+        opacity: 1;
+        transition: opacity 1s ease;
+    }
+    .errorlist li { margin: 0; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    
+    /* Responsive tweak: stack columns on small phone screens */
+    @media (max-width: 600px) {
+        .form-grid { grid-template-columns: 1fr; gap: 0; }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width: 700px; margin: 0 auto;">
+    <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+        <h2 style="margin: 0; font-size: 1.8rem; color: #fff;">
+            <i class="fas fa-video" style="color: var(--accent-brand); margin-right: 10px;"></i>Studio Booking
+        </h2>
+        <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 5px;">Schedule time in the main studio or recording booths.</div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <label>Programme Name</label>
+        {{ form.prog_name }}
+        {{ form.prog_name.errors }}
+
+        <label>Date of Booking</label>
+        <input type="text" value="{% now 'F j, Y' %}" disabled style="background: rgba(255,255,255,0.02); color: var(--text-muted); cursor: not-allowed; border-color: rgba(255,255,255,0.05);">
+
+        <div class="form-grid">
+            <div>
+                <label>Recording Date</label>
+                {{ form.date_of_recording }}
+                {{ form.date_of_recording.errors }}
+            </div>
+            <div>
+                <label>Recording Time</label>
+                {{ form.time_of_recording }}
+                {{ form.time_of_recording.errors }}
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div>
+                <label>Duration (e.g., 2 Hours)</label>
+                {{ form.duration }}
+                {{ form.duration.errors }}
+            </div>
+            <div>
+                <label>Recording Mode</label>
+                {{ form.mode }}
+                {{ form.mode.errors }}
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div>
+                <label>Producer</label>
+                {{ form.producer }}
+                {{ form.producer.errors }}
+            </div>
+            <div>
+                <label>Presenter / Host</label>
+                {{ form.presenter }}
+                {{ form.presenter.errors }}
+            </div>
+        </div>
+        
+        <button type="submit" class="btn-pink" style="width: 100%; margin-top: 15px; font-size: 1.1rem; padding: 15px;">
+            <i class="fas fa-paper-plane"></i> Submit Booking Request
+        </button>
+    </form>
+</div>
+
+<script>
+    // Fade out error messages after 3 seconds
+    setTimeout(function() {
+        const errorLists = document.querySelectorAll('.errorlist');
+        errorLists.forEach(function(errorList) {
+            errorList.style.opacity = '0';
+            setTimeout(function() {
+                errorList.style.display = 'none';
+            }, 1000); // Wait for fade transition
+        });
+    }, 3000);
+</script>
+{% endblock %}

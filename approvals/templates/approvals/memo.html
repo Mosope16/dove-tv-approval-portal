@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Studio Booking Memo - #SB-{{ booking.id }}</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #fff; color: #000; margin: 0; padding: 40px; line-height: 1.6; }
+        .memo-container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 50px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; border-bottom: 3px solid #d32f2f; padding-bottom: 20px; margin-bottom: 30px; }
+        .logo-placeholder { font-size: 24px; font-weight: bold; color: #d32f2f; letter-spacing: 2px; }
+        .memo-title { font-size: 28px; font-weight: bold; text-transform: uppercase; margin: 0; }
+        .meta-data { margin-bottom: 30px; }
+        .meta-data p { margin: 5px 0; }
+        .meta-data strong { display: inline-block; width: 150px; }
+        .content-section { margin-bottom: 30px; }
+        .content-section h3 { border-bottom: 1px solid #eee; padding-bottom: 5px; color: #333; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 60px; padding-top: 30px; }
+        .sign-block { text-align: center; width: 250px; }
+        .sign-line { border-top: 1px solid #000; margin-top: 50px; padding-top: 10px; font-weight: bold; }
+        
+        @media print {
+            body { padding: 0; background: #fff; }
+            .memo-container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align: right; margin-bottom: 20px;">
+        <button onclick="window.print()" style="background: #d32f2f; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px;">Print / Save as PDF</button>
+        <a href="{% url 'dashboard' %}" style="margin-left: 15px; color: #555; text-decoration: none;">Back to Dashboard</a>
+    </div>
+
+    <div class="memo-container">
+        <div class="header">
+            <div class="logo-placeholder">DOVE TV</div>
+            <div>
+                <h1 class="memo-title">Studio Booking</h1>
+                <p style="text-align: right; margin: 5px 0 0 0; color: #666;">Ref: #SB-{{ booking.id }}</p>
+            </div>
+        </div>
+
+        <div class="meta-data">
+            <p><strong>Date Filed:</strong> {{ booking.created_at|date:"F d, Y" }}</p>
+            <p><strong>Requested By:</strong> {{ booking.requester.get_full_name|default:booking.requester.username }}</p>
+            <p><strong>Status:</strong> <span style="color: green; font-weight: bold;">FULLY APPROVED</span></p>
+        </div>
+
+        <div class="content-section">
+            <h3>Programme Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 8px 0; width: 30%;"><strong>Programme Name:</strong></td><td>{{ booking.prog_name }}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Recording Date:</strong></td><td>{{ booking.date_of_recording|date:"F d, Y" }}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Time:</strong></td><td>{{ booking.time_of_recording }}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Duration:</strong></td><td>{{ booking.duration }}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Mode:</strong></td><td>{{ booking.get_mode_display }}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Producer:</strong></td><td>{{ booking.producer }}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Presenter/Guest:</strong></td><td>{{ booking.presenter|default:"N/A" }} {% if booking.guest_name %}(Guest: {{ booking.guest_name }}){% endif %}</td></tr>
+            </table>
+        </div>
+
+        <div class="signatures">
+            <div class="sign-block">
+                <p style="margin: 0; color: #555;">Stage 1 Clearance</p>
+                <div class="sign-line">{{ booking.approver.get_full_name|default:booking.approver.username }}<br><span style="font-size: 12px; font-weight: normal;">HOU / Manager / Asst.</span></div>
+            </div>
+            <div class="sign-block">
+                <p style="margin: 0; color: #555;">Final Approval</p>
+                <div class="sign-line" style="color: transparent;">_<br><span style="font-size: 12px; font-weight: normal; color: #000;">Executive / Admin</span></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,154 @@
+{% extends 'approvals/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Duty Roster | Dove TV Portal{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1><i class="fas fa-calendar-alt" style="color: var(--accent); margin-right: 0.5rem;"></i> Engineering Duty Chart</h1>
+        <p class="subtitle">Monthly technical personnel assignment schedule.</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <a href="?month={{ prev_m }}&year={{ prev_y }}" class="btn btn-outline" style="padding: 0.5rem 1rem;"><i class="fas fa-chevron-left"></i></a>
+        <h3 style="font-weight: 800; min-width: 150px; text-align: center;">{{ month_name }} {{ year }}</h3>
+        <a href="?month={{ next_m }}&year={{ next_y }}" class="btn btn-outline" style="padding: 0.5rem 1rem;"><i class="fas fa-chevron-right"></i></a>
+    </div>
+</header>
+
+<div class="glass-card" style="padding: 0; overflow: hidden; border-radius: 1rem;">
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+                <tr style="background: var(--primary); color: white;">
+                    <th style="padding: 1rem; text-align: left; border: 1px solid rgba(255,255,255,0.1);">DAY</th>
+                    <th style="padding: 1rem; text-align: left; border: 1px solid rgba(255,255,255,0.1);">AUDIO ENGINEER</th>
+                    <th style="padding: 1rem; text-align: left; border: 1px solid rgba(255,255,255,0.1);">ENGINEER ON DUTY (F)</th>
+                    <th style="padding: 1rem; text-align: left; border: 1px solid rgba(255,255,255,0.1);">OUTSIDE BROADCAST / ARENA</th>
+                    <th style="padding: 1rem; text-align: left; border: 1px solid rgba(255,255,255,0.1);">BROADCAST IT/ICT</th>
+                    <th style="padding: 1rem; text-align: left; border: 1px solid rgba(255,255,255,0.1);">STREAMING</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for day, pos_map in duties_by_day.items %}
+                <tr style="border-bottom: 1px solid var(--border); {% if forloop.counter|divisibleby:2 %}background: rgba(0,0,0,0.02);{% endif %}">
+                    <td style="padding: 0.75rem 1rem; font-weight: 800; border: 1px solid var(--border); background: var(--bg);">
+                        {{ day }}
+                    </td>
+                    
+                    {% for pos_code, pos_label in positions %}
+                    <td style="padding: 0.75rem 1rem; border: 1px solid var(--border); min-width: 150px;">
+                        {% with duties_list=pos_map|dict_get:pos_code %}
+                            {% if duties_list %}
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    {% for duty in duties_list %}
+                                    <div style="display: flex; flex-direction: column; gap: 0.1rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.25rem;">
+                                        <span style="font-weight: 700; color: var(--primary);">
+                                            {{ duty.engineer.username|upper }}
+                                        </span>
+                                        {% if duty.notes %}
+                                        <span style="font-size: 0.7rem; color: #64748b;">
+                                            <i class="fas fa-info-circle"></i> {{ duty.notes }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% if is_manager %}
+                                    <button onclick="openRosterModal('{{ year }}-{{ month }}-{{ day }}', '{{ pos_code }}', '{{ pos_label }}')" 
+                                            style="background: none; border: 1px dashed var(--border); color: #94a3b8; width: 100%; padding: 0.25rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.7rem; margin-top: 0.25rem;">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            {% elif is_manager %}
+                                <button onclick="openRosterModal('{{ year }}-{{ month }}-{{ day }}', '{{ pos_code }}', '{{ pos_label }}')" 
+                                        style="background: none; border: 1px dashed var(--border); color: #94a3b8; width: 100%; padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.75rem;">
+                                    <i class="fas fa-plus"></i> Assign
+                                </button>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CODE Legend Selection -->
+<div class="glass-card" style="margin-top: 2rem;">
+    <h4 style="margin-bottom: 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Personnel Code Legend</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+        {% for eng in engineers %}
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800;">
+                {{ eng.username|first|upper }}
+            </div>
+            <span style="font-size: 0.85rem; font-weight: 600;">{{ eng.get_full_name|default:eng.username }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Assign Duty Modal -->
+<div id="rosterModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="width: 100%; max-width: 450px; background: var(--panel); padding: 2.5rem; border-radius: 1.5rem; box-shadow: var(--shadow-lg); position: relative; overflow: hidden;">
+        <!-- Accent Bar top -->
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 6px; background: var(--accent);"></div>
+        
+        <h3 style="margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.75rem; color: var(--text);">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(225, 29, 72, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            Assign Duty
+        </h3>
+        <p id="modalInfo" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);"></p>
+        
+        <form method="post" action="{% url 'assign_duty' %}" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% csrf_token %}
+            <input type="hidden" name="date" id="rosterDate">
+            <input type="hidden" name="position" id="rosterPosition">
+            
+            <div class="form-group" style="margin: 0;">
+                <label>Select Engineer</label>
+                <select name="engineer_id" required style="cursor: pointer;">
+                    <option value="" disabled selected>-- Choose Engineer --</option>
+                    {% for eng in engineers %}
+                    <option value="{{ eng.id }}">{{ eng.get_full_name|default:eng.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin: 0;">
+                <label>Shift Notes</label>
+                <textarea name="notes" placeholder="Optional notes for this shift... (e.g. Call time 0700)" style="height: 100px; resize: none;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="button" onclick="closeRosterModal()" class="btn btn-outline" style="flex: 1; height: 50px; font-weight: 800;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1; height: 50px; font-weight: 800;"><i class="fas fa-check"></i> Assign Shift</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openRosterModal(dateStr, posCode, posLabel) {
+    document.getElementById('rosterModal').style.display = 'flex';
+    document.getElementById('rosterDate').value = dateStr;
+    document.getElementById('rosterPosition').value = posCode;
+    document.getElementById('modalInfo').innerHTML = `Assigning <strong>${posLabel}</strong> for <strong>${dateStr}</strong>`;
+}
+
+function closeRosterModal() {
+    document.getElementById('rosterModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    if (event.target == document.getElementById('rosterModal')) {
+        closeRosterModal();
+    }
+}
+</script>
+{% endblock %}

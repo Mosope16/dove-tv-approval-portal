@@ -1,0 +1,181 @@
+{% extends 'approvals/base.html' %}
+
+{% block title %}Gear Vault | Dove TV Portal{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h1 style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 48px; height: 48px; background: rgba(225, 29, 72, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                <i class="fas fa-boxes-stacked"></i>
+            </div>
+            Gear Vault
+        </h1>
+        <p class="subtitle">Real-time inventory management for production and broadcast equipment.</p>
+    </div>
+    <div style="display: flex; gap: 1.5rem;">
+        <div class="stat-card" style="padding: 1.25rem 2rem; border-left: 4px solid #22c55e;">
+            <p class="stat-label">In Stock</p>
+            <p class="stat-value" style="font-size: 1.5rem;">{{ stats.available }}</p>
+        </div>
+        <div class="stat-card" style="padding: 1.25rem 2rem; border-left: 4px solid var(--accent); background: rgba(225, 29, 72, 0.03);">
+            <p class="stat-label">Maintenance</p>
+            <p class="stat-value" style="font-size: 1.5rem;">{{ stats.maintenance }}</p>
+        </div>
+    </div>
+</header>
+
+<div class="grid {% if is_manager %}grid-cols-3{% else %}grid-cols-1{% endif %}" style="gap: 2.5rem; align-items: start;">
+    
+    {% if is_manager %}
+    <!-- Manager: Add/Edit Equipment -->
+    <div class="glass-card" style="padding: 2rem;">
+        <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; font-weight: 800; color: var(--text);">
+            <i class="fas fa-plus-circle" style="color: var(--accent); margin-right: 0.5rem;"></i> Register Asset
+        </h3>
+        <form method="post" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Asset Name</label>
+                {{ form.name }}
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                {{ form.category }}
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    {{ form.quantity }}
+                </div>
+                <div class="form-group">
+                    <label>Serial #</label>
+                    {{ form.serial_number }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Condition</label>
+                {{ form.condition }}
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; height: 50px;">
+                <i class="fas fa-save"></i> Register Asset
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Equipment Catalogue -->
+    <div style="{% if is_manager %}grid-column: span 2;{% endif %} display: flex; flex-direction: column; gap: 1rem;">
+        {% for equipment in equipment_list %}
+        <div class="content-card" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; {% if equipment.available_quantity == 0 %}opacity: 0.7;{% endif %}">
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; border: 1px solid var(--border); color: var(--accent);">
+                    {% if equipment.category == 'CAMERA' %}<i class="fas fa-camera"></i>
+                    {% elif equipment.category == 'MONITOR' %}<i class="fas fa-desktop"></i>
+                    {% elif equipment.category == 'STREAMBOX' %}<i class="fas fa-broadcast-tower"></i>
+                    {% else %}<i class="fas fa-toolbox"></i>{% endif %}
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.85rem;">
+                        <h4 style="font-weight: 800; font-size: 1.1rem; color: var(--text);">{{ equipment.name }}</h4>
+                        <span class="status-pill" style="font-size: 0.65rem; background: var(--border);">{{ equipment.get_category_display }}</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        <span style="font-weight: 700;">SN:</span> {{ equipment.serial_number|default:"N/A" }} 
+                        <span style="opacity: 0.3; margin: 0 0.5rem;">|</span> 
+                        <span style="font-weight: 700;">Condition:</span> {{ equipment.condition|default:"Good"|upper }}
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 2.5rem;">
+                <!-- Quantity Meter -->
+                <div style="text-align: right;">
+                    <p class="stat-label" style="font-size: 0.65rem;">Stock Status</p>
+                    <div style="font-size: 1.25rem; font-weight: 900; color: {% if equipment.available_quantity > 0 %}#22c55e{% else %}var(--accent){% endif %}; letter-spacing: -0.01em;">
+                        {{ equipment.available_quantity }}<span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 400;">/{{ equipment.quantity }}</span>
+                    </div>
+                </div>
+
+                <!-- Action Button / Status -->
+                <div style="width: 160px; display: flex; justify-content: flex-end;">
+                    {% if equipment.status == 'IN_MAINTENANCE' %}
+                    <span class="status-pill pill-denied"><i class="fas fa-wrench"></i> MAINTENANCE</span>
+                    {% elif equipment.available_quantity > 0 %}
+                    <button onclick="openCheckoutModal('{{ equipment.id }}', '{{ equipment.name }}', {{ equipment.available_quantity }})" class="btn btn-primary" style="padding: 0.5rem 1.25rem;">
+                        <i class="fas fa-shopping-basket"></i> Request
+                    </button>
+                    {% else %}
+                    <span class="status-pill" style="background: rgba(0,0,0,0.05); color: var(--text-muted);"><i class="fas fa-ban"></i> DEPLETED</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="glass-card" style="text-align: center; padding: 5rem 2rem; border: 2px dashed var(--border);">
+            <i class="fas fa-box-open" style="font-size: 3rem; color: var(--border); margin-bottom: 1.5rem; display: block;"></i>
+            <h3 style="font-weight: 800; color: var(--text);">Vault Empty</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">No equipment has been registered in the system yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal for checkout -->
+<div id="checkoutModal" style="display:none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="glass-card" style="width: 100%; max-width: 440px; background: var(--panel); border: 1px solid var(--border); padding: 2.5rem; box-shadow: var(--shadow-lg); position: relative;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 56px; height: 56px; background: rgba(225, 29, 72, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent); margin: 0 auto 1.25rem;">
+                <i class="fas fa-calendar-check" style="font-size: 1.5rem;"></i>
+            </div>
+            <h3 id="modalTitle" style="font-weight: 800; color: var(--text); font-size: 1.25rem;">Request Equipment</h3>
+            <p id="modalSubtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.4rem;">Specify your requirements for this booking.</p>
+        </div>
+
+        <form id="checkoutForm" method="post" action="" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Quantity Required</label>
+                <input type="number" name="quantity" id="modalQty" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>Expected Return Date</label>
+                <input type="date" name="return_date" id="modalDate" required>
+            </div>
+            <div class="form-group">
+                <label>Mission / Venue Details</label>
+                <textarea name="notes" placeholder="e.g. Studio B, External Production..." style="height: 100px; resize: none;"></textarea>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                <button type="button" onclick="closeModal()" class="btn btn-outline" style="width: 100%;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCheckoutModal(id, name, max) {
+    const modal = document.getElementById('checkoutModal');
+    modal.style.display = 'flex';
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalSubtitle').textContent = 'Requesting from Gear Vault';
+    document.getElementById('modalQty').max = max;
+    document.getElementById('checkoutForm').action = '/inventory/request/' + id + '/';
+    
+    // Set min date to today
+    document.getElementById('modalDate').min = new Date().toISOString().split("T")[0];
+}
+
+function closeModal() {
+    document.getElementById('checkoutModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    if (event.target == document.getElementById('checkoutModal')) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}
